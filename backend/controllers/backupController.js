@@ -761,6 +761,7 @@ const getMyBackups = async (req, res) => {
 // @access  Private (admin restores all, employee restores own only)
 const restoreBackup = async (req, res) => {
   let cleanupPath = null;
+  const activeStorageMode = process.env.STORAGE_MODE || 'local';
   try {
     const backup = await Backup.findById(req.params.id);
 
@@ -923,15 +924,31 @@ const restoreBackup = async (req, res) => {
           storagePath: existingFile.storagePath,
           size: existingFile.size
         });
-
-        // Copy restored file to uploads (re-encrypt plaintext from the archive)
-        const newFilename = `restored-${Date.now()}-${fileName}`;
-        const newPath = path.join(__dirname, '..', 'uploads', newFilename);
+	        // Copy restored file to storage (re-encrypt plaintext from the archive)
+        let newStoragePath, newFilename;
         const restoreKey = generateKey();
-        fs.writeFileSync(newPath, encryptBuffer(restoredBytes, restoreKey));
+        const encrypted = encryptBuffer(restoredBytes, restoreKey);
+
+        if (activeStorageMode === 's3') {
+          const { PutObjectCommand } = require('@aws-sdk/client-s3');
+          const s3Client = require('../config/s3');
+          const { v4: uuidv4 } = require('uuid');
+          newFilename = `${uuidv4()}${path.extname(fileName)}`;
+          newStoragePath = `uploads/${restoreOwnerId}/${newFilename}`;
+          await s3Client.send(new PutObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: newStoragePath,
+            Body: encrypted
+          }));
+        } else {
+          newFilename = `restored-${Date.now()}-${fileName}`;
+          newStoragePath = `uploads/${newFilename}`;
+          fs.writeFileSync(path.join(__dirname, '..', newStoragePath), encrypted);
+        }
 
         existingFile.filename = newFilename;
-        existingFile.storagePath = `uploads/${newFilename}`;
+        existingFile.storagePath = newStoragePath;
+        existingFile.storageMode = activeStorageMode;
         existingFile.size = stats.size;
         existingFile.mimetype = restoredMimetype;
         existingFile.isEncrypted = true;
@@ -955,20 +972,36 @@ const restoreBackup = async (req, res) => {
           await adjustStorageUsed(restoreOwnerId, storageDelta);
         }
       } else {
-        // Create new file record
-        const newFilename = `restored-${Date.now()}-${fileName}`;
-        const newPath = path.join(__dirname, '..', 'uploads', newFilename);
+        // Create new file record — write to whichever storage mode is active
+        let newStoragePath, newFilename;
         const restoreKey = generateKey();
-        fs.writeFileSync(newPath, encryptBuffer(restoredBytes, restoreKey));
+        const encrypted = encryptBuffer(restoredBytes, restoreKey);
+
+        if (activeStorageMode === 's3') {
+          const { PutObjectCommand } = require('@aws-sdk/client-s3');
+          const s3Client = require('../config/s3');
+          const { v4: uuidv4 } = require('uuid');
+          newFilename = `${uuidv4()}${path.extname(fileName)}`;
+          newStoragePath = `uploads/${restoreOwnerId}/${newFilename}`;
+          await s3Client.send(new PutObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: newStoragePath,
+            Body: encrypted
+          }));
+        } else {
+          newFilename = `restored-${Date.now()}-${fileName}`;
+          newStoragePath = `uploads/${newFilename}`;
+          fs.writeFileSync(path.join(__dirname, '..', newStoragePath), encrypted);
+        }
 
         await File.create({
           originalName,
           filename: newFilename,
-          storagePath: `uploads/${newFilename}`,
+          storagePath: newStoragePath,
           mimetype: restoredMimetype,
           size: stats.size,
           owner: restoreOwnerId,
-          storageMode: 'local',
+          storageMode: activeStorageMode,
           isEncrypted: true,
           encryptionKey: restoreKey,
           sha256: hashFile(restoredBytes),
