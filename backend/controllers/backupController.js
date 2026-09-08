@@ -152,7 +152,7 @@ const performBackup = async (type, initiatedBy = null) => {
 
   try {
     // Get all active files
-    const files = await File.find({ isDeleted: false }).select('+encryptionKey');
+    const files = await File.find({ isDeleted: false }).select('+encryptionKey').populate('folder', 'name');
 
     // Create zip archive
     const output = fs.createWriteStream(backupPath);
@@ -192,7 +192,9 @@ const performBackup = async (type, initiatedBy = null) => {
             entry: entryName,
             originalName: file.originalName,
             mimetype: file.mimetype || 'application/octet-stream',
-            size: file.size
+            size: file.size,
+	    folderId: file.folder ? file.folder._id.toString() : null,
+            folderName: file.folder ? file.folder.name : null
           });
         }
       }
@@ -549,7 +551,7 @@ const performUserBackup = async (type, userId, initiatedBy = null) => {
     const files = await File.find({
       isDeleted: false,
       owner: userId
-    }).select('+encryptionKey');
+    }).select('+encryptionKey').populate('folder', 'name');
 
     const output = fs.createWriteStream(backupPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
@@ -587,7 +589,9 @@ const performUserBackup = async (type, userId, initiatedBy = null) => {
             entry: entryName,
             originalName: file.originalName,
             mimetype: file.mimetype || 'application/octet-stream',
-            size: file.size
+            size: file.size,
+	    folderId: file.folder ? file.folder._id.toString() : null,
+            folderName: file.folder ? file.folder.name : null
           });
         }
       }
@@ -762,6 +766,29 @@ const getMyBackups = async (req, res) => {
 const restoreBackup = async (req, res) => {
   let cleanupPath = null;
   const activeStorageMode = process.env.STORAGE_MODE || 'local';
+
+  const folderCache = new Map(); // original folderId -> resolved folderId for this restore run
+
+  const resolveFolder = async (meta, ownerId) => {
+    if (!meta || !meta.folderId) return null; // was a root-level file
+
+    if (folderCache.has(meta.folderId)) return folderCache.get(meta.folderId);
+
+    const Folder = require('../models/Folder');
+    let folder = await Folder.findOne({ _id: meta.folderId, owner: ownerId, isDeleted: false });
+
+    if (!folder && meta.folderName) {
+      folder = await Folder.findOne({ name: meta.folderName, owner: ownerId, parent: null, isDeleted: false });
+      if (!folder) {
+        folder = await Folder.create({ name: meta.folderName, owner: ownerId, parent: null });
+      }
+    }
+
+    const resolvedId = folder ? folder._id.toString() : null;
+    folderCache.set(meta.folderId, resolvedId);
+    return resolvedId;
+  };
+
   try {
     const backup = await Backup.findById(req.params.id);
 
@@ -1001,6 +1028,7 @@ const restoreBackup = async (req, res) => {
           mimetype: restoredMimetype,
           size: stats.size,
           owner: restoreOwnerId,
+	  folder: await resolveFolder(meta, restoreOwnerId),
           storageMode: activeStorageMode,
           isEncrypted: true,
           encryptionKey: restoreKey,
