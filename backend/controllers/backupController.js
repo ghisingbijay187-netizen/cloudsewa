@@ -1148,15 +1148,11 @@ const sweepOverLimitBackups = async (config) => {
     } else {
       toDelete = backups.slice(0, backups.length - limit);
     }
-
     for (const backup of toDelete) {
-      const backupPath = path.join(__dirname, '..', backup.storagePath);
-      if (fs.existsSync(backupPath)) {
-        try {
-          fs.unlinkSync(backupPath);
-        } catch (err) {
-          console.error('Failed to remove backup file:', backup.storagePath, err.message);
-        }
+      try {
+        await deleteFile(backup.storagePath, backup.storageMode);
+      } catch (err) {
+        console.error('Failed to remove backup file:', backup.storagePath, backup.storageMode, err.message);
       }
       await Backup.findByIdAndDelete(backup._id);
       totalDeleted++;
