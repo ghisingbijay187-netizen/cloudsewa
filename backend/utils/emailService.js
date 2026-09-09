@@ -111,7 +111,7 @@ const sendBackupCompleteEmail = async (backup) => {
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL,
-    subject: `✅ CloudSewa — ${escapeHtml(backup.type)} Backup Completed Successfully`,
+    subject: `✅ CloudSewa : ${escapeHtml(backup.type)} Backup Completed Successfully`,
     html
   });
 };
@@ -151,7 +151,7 @@ const sendBackupFailedEmail = async (backup, error) => {
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL,
-    subject: `❌ CloudSewa — ${escapeHtml(backup.type)} Backup Failed`,
+    subject: `❌ CloudSewa : ${escapeHtml(backup.type)} Backup Failed`,
     html
   });
 };
@@ -173,7 +173,7 @@ const sendStorageWarningEmail = async (usedPercentage, usedGB, totalGB) => {
           </tr>
           <tr>
             <td style="padding: 10px; border: 1px solid #ddd;"><strong>Status</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd; color: #e67e22;"><strong>Warning — Storage above 80%</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd; color: #e67e22;"><strong>Warning!! - Storage above 80%</strong></td>
           </tr>
         </table>
         <p style="margin-top: 20px; color: #666;">This is an automated notification from CloudSewa.</p>
@@ -183,7 +183,7 @@ const sendStorageWarningEmail = async (usedPercentage, usedGB, totalGB) => {
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL,
-    subject: `⚠️ CloudSewa — Storage Warning: ${usedPercentage}% Used`,
+    subject: `⚠️ CloudSewa —: Storage Warning: ${usedPercentage}% Used`,
     html
   });
 };
@@ -216,7 +216,7 @@ const sendRegistrationPendingEmail = async (user) => {
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL,
-    subject: `🔔 CloudSewa — New Registration Awaiting Approval`,
+    subject: `🔔 CloudSewa : New Registration Awaiting Approval`,
     html
   });
 };
@@ -239,7 +239,7 @@ const sendRegistrationApprovedEmail = async (user) => {
 
   await sendEmail({
     to: user.email,
-    subject: `✅ CloudSewa — Your Account Has Been Approved`,
+    subject: `✅ CloudSewa : Your Account Has Been Approved`,
     html
   });
 };
@@ -268,7 +268,7 @@ const sendRegistrationRejectedEmail = async (user, reason) => {
 
   await sendEmail({
     to: user.email,
-    subject: `CloudSewa — Registration Update`,
+    subject: `CloudSewa : Registration Update`,
     html
   });
 };
@@ -301,7 +301,7 @@ const sendResetRequestPendingEmail = async (user) => {
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL,
-    subject: `🔔 CloudSewa — Password Reset Request Awaiting Approval`,
+    subject: `🔔 CloudSewa : Password Reset Request Awaiting Approval`,
     html
   });
 };
@@ -324,7 +324,7 @@ const sendResetApprovedEmail = async (user) => {
 
   await sendEmail({
     to: user.email,
-    subject: `✅ CloudSewa — Password Reset Approved`,
+    subject: `✅ CloudSewa : Password Reset Approved`,
     html
   });
 };
@@ -354,7 +354,7 @@ const sendResetRejectedEmail = async (user, reason) => {
 
   await sendEmail({
     to: user.email,
-    subject: `CloudSewa — Password Reset Update`,
+    subject: `CloudSewa : Password Reset Update`,
     html
   });
 };
