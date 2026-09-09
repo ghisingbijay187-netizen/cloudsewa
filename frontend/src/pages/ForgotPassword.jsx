@@ -127,6 +127,18 @@ const ForgotPassword = () => {
       return { level: 2, label: 'Moderate', color: 'var(--warning)' };
     return { level: 1, label: 'Weak', color: 'var(--danger)' };
   };
+  const resetToForm = () => {
+    setStep('form');
+    setEmail('');
+    setRequestId(null);
+    setRequestToken('');
+    setResetToken('');
+    setRejectedReason('');
+    setPassword('');
+    setConfirmPassword('');
+    setShowPassword(false);
+    setError('');
+  };
 
   const strength = getPasswordStrength();
 
@@ -538,7 +550,7 @@ const ForgotPassword = () => {
               }}>
                 Your password has been updated. You can now log in with your new password.
               </p>
-              <Link to="/login" className="btn btn-primary btn-full"
+              <Link to="/login" onClick={resetToForm} className="btn btn-primary btn-full"
                 style={{ textDecoration: 'none', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', height: '44px' }}>
                 Go to Login

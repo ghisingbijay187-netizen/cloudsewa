@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { sendRegistrationPendingEmail } = require('../utils/emailService');
 const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const { validateName, validatePassword } = require('../utils/validation');
@@ -103,6 +104,12 @@ const register = async (req, res) => {
         priority: 'high',
         metadata: { userId: String(user._id) }
       });
+
+      try {
+        await sendRegistrationPendingEmail(user);
+      } catch (emailErr) {
+        console.error('Registration pending email error:', emailErr.message);
+      }
 
       return res.status(201).json({
         success: true,
@@ -538,6 +545,25 @@ const forgotPassword = async (req, res) => {
       email: user.email,
       requestToken
     });
+
+    // Notify admins
+    const { notifyMany } = require('../utils/notificationService');
+    const { sendResetRequestPendingEmail } = require('../utils/emailService');
+    const admins = await User.find({ role: 'admin', registrationStatus: { $nin: ['pending', 'rejected'] } }).select('_id');
+    await notifyMany(admins.map((a) => a._id), {
+      type: 'reset_request',
+      title: 'Password reset request awaiting approval',
+      message: `${user.name} (${user.email}) has requested a password reset.`,
+      icon: 'shield',
+      link: '/admin',
+      priority: 'high',
+      metadata: { userId: String(user._id) }
+    });
+    try {
+      await sendResetRequestPendingEmail(user);
+    } catch (emailErr) {
+      console.error('Reset request pending email error:', emailErr.message);
+    }
 
     res.status(200).json({
       success: true,

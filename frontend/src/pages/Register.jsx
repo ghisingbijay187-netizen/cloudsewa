@@ -539,7 +539,7 @@ const Register = () => {
                 An administrator has approved your registration.
                 You can now sign in with your credentials.
               </p>
-              <Link to="/login" className="btn btn-primary btn-full"
+              <Link to="/login" onClick={resetForm}  className="btn btn-primary btn-full"
                 style={{ textDecoration: 'none', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', height: '44px' }}>
                 Go to Login

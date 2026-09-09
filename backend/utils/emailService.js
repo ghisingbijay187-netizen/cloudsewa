@@ -188,9 +188,186 @@ const sendStorageWarningEmail = async (usedPercentage, usedGB, totalGB) => {
   });
 };
 
+// New registration awaiting approval — notifies the admin inbox
+const sendRegistrationPendingEmail = async (user) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #1F3864;">New Registration Awaiting Approval</h2>
+        <p>A new user has registered and is waiting for an administrator to approve their account before they can sign in.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background-color: #D6E4F0;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Name</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(user.name)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Email</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(user.email)}</td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px; color: #666;">Log in to the Admin Panel to approve or reject this registration.</p>
+        <p style="margin-top: 10px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: process.env.ADMIN_EMAIL,
+    subject: `🔔 CloudSewa — New Registration Awaiting Approval`,
+    html
+  });
+};
+
+// Registration approved — notifies the new user directly
+const sendRegistrationApprovedEmail = async (user) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #2e7d32;">Your Account Has Been Approved</h2>
+        <p>Hi ${escapeHtml(user.name)},</p>
+        <p>Your CloudSewa account has been approved by an administrator. You can now sign in and start using the system.</p>
+        <p style="margin-top: 20px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: `✅ CloudSewa — Your Account Has Been Approved`,
+    html
+  });
+};
+
+// Registration rejected — notifies the new user directly, with the admin's reason
+const sendRegistrationRejectedEmail = async (user, reason) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #c0392b;">Your Registration Was Not Approved</h2>
+        <p>Hi ${escapeHtml(user.name)},</p>
+        <p>Your CloudSewa account registration was reviewed by an administrator and was not approved.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background-color: #FCE4D6;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Reason</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(reason)}</td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: `CloudSewa — Registration Update`,
+    html
+  });
+};
+
+// New password reset request awaiting approval — notifies the admin inbox
+const sendResetRequestPendingEmail = async (user) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #1F3864;">Password Reset Request Awaiting Approval</h2>
+        <p>A user has requested a password reset and is waiting for an administrator to approve it.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background-color: #D6E4F0;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Name</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(user.name)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Email</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(user.email)}</td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px; color: #666;">Log in to the Admin Panel to approve or reject this request.</p>
+        <p style="margin-top: 10px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: process.env.ADMIN_EMAIL,
+    subject: `🔔 CloudSewa — Password Reset Request Awaiting Approval`,
+    html
+  });
+};
+
+// Password reset approved — notifies the user directly
+const sendResetApprovedEmail = async (user) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #2e7d32;">Password Reset Approved</h2>
+        <p>Hi ${escapeHtml(user.name)},</p>
+        <p>Your password reset request has been approved. You can now go to the reset password page to set a new password.</p>
+        <p style="margin-top: 20px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: `✅ CloudSewa — Password Reset Approved`,
+    html
+  });
+};
+
+// Password reset rejected — notifies the user directly, with the admin's reason
+const sendResetRejectedEmail = async (user, reason) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #1F3864; padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">CloudSewa</h1>
+      </div>
+      <div style="padding: 30px; background-color: #f9f9f9;">
+        <h2 style="color: #c0392b;">Password Reset Request Not Approved</h2>
+        <p>Hi ${escapeHtml(user.name)},</p>
+        <p>Your password reset request was reviewed by an administrator and was not approved.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background-color: #FCE4D6;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Reason</strong></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${escapeHtml(reason)}</td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px; color: #666;">If you believe this is a mistake, please contact your administrator.</p>
+        <p style="margin-top: 10px; color: #666;">This is an automated notification from CloudSewa.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: `CloudSewa — Password Reset Update`,
+    html
+  });
+};
+
 module.exports = {
   sendEmail,
   sendBackupCompleteEmail,
   sendBackupFailedEmail,
-  sendStorageWarningEmail
+  sendStorageWarningEmail,
+  sendRegistrationPendingEmail,
+  sendRegistrationApprovedEmail,
+  sendRegistrationRejectedEmail,
+  sendResetRequestPendingEmail,
+  sendResetApprovedEmail,
+  sendResetRejectedEmail
 };

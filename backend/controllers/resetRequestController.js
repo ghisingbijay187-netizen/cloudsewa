@@ -2,7 +2,7 @@ const PasswordResetRequest = require('../models/PasswordResetRequest');
 const ActivityLog = require('../models/ActivityLog');
 const crypto = require('crypto');
 const { notify } = require('../utils/notificationService');
-
+const { sendResetApprovedEmail, sendResetRejectedEmail } = require('../utils/emailService');
 const logActivity = async (userId, action, description, extras = {}) => {
   try {
     await ActivityLog.create({
@@ -94,6 +94,12 @@ const approveResetRequest = async (req, res) => {
       metadata: { email: request.email }
     });
 
+    try {
+      await sendResetApprovedEmail(request.user);
+    } catch (emailErr) {
+      console.error('Reset approved email error:', emailErr.message);
+    }
+
     res.status(200).json({
       success: true,
       message: `Password reset approved for ${request.email}. They can now reset their password.`
@@ -144,6 +150,23 @@ const rejectResetRequest = async (req, res) => {
         resourceId: request.user._id,
         resourceName: request.user.name
       });
+
+    // Notify the user — this was previously missing entirely
+    await notify(request.user._id, {
+      type: 'reset_rejected',
+      title: 'Password reset rejected',
+      message: request.rejectedReason,
+      icon: 'x',
+      link: '/login',
+      priority: 'medium',
+      metadata: { email: request.email }
+    });
+
+    try {
+      await sendResetRejectedEmail(request.user, request.rejectedReason);
+    } catch (emailErr) {
+      console.error('Reset rejected email error:', emailErr.message);
+    }
 
     res.status(200).json({
       success: true,

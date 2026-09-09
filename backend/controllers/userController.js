@@ -5,7 +5,7 @@ const ActivityLog = require('../models/ActivityLog');
 const { escapeRegExp } = require('../utils/regexUtil');
 const { validateName, validatePassword } = require('../utils/validation');
 const { notify } = require('../utils/notificationService');
-
+const { sendRegistrationApprovedEmail, sendRegistrationRejectedEmail } = require('../utils/emailService');
 // Log activity helper
 const logActivity = async (userId, action, description, req, extras = {}) => {
   try {
@@ -625,6 +625,12 @@ const approveRegistration = async (req, res) => {
       metadata: { approvedBy: String(req.user.id) }
     });
 
+    try {
+      await sendRegistrationApprovedEmail(user);
+    } catch (emailErr) {
+      console.error('Registration approved email error:', emailErr.message);
+    }
+
     await logActivity(req.user.id, 'user_update',
       `Registration approved for: ${user.email}`,
       req, {
@@ -691,6 +697,12 @@ const rejectRegistration = async (req, res) => {
       priority: 'high',
       metadata: { rejectedBy: String(req.user.id) }
     });
+
+    try {
+      await sendRegistrationRejectedEmail(user, reason);
+    } catch (emailErr) {
+      console.error('Registration rejected email error:', emailErr.message);
+    }
 
     await logActivity(req.user.id, 'user_update',
       `Registration rejected for: ${user.email}`,
