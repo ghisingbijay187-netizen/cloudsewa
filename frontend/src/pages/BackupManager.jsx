@@ -205,7 +205,7 @@ const BackupManager = () => {
               : 'Backup and restore your own files'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {isAdmin && (
             <button
               className="btn btn-ghost"

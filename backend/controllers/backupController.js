@@ -180,24 +180,28 @@ const performBackup = async (type, initiatedBy = null) => {
         }
 
         if (buffer) {
-          const entryName = `files/${file.owner._id || file.owner}__${file.originalName}`;
-          // Decrypt encrypted blobs so the archive contains usable plaintext
-          const outBuf = (file.isEncrypted && file.encryptionKey)
-            ? decryptBuffer(buffer, file.encryptionKey)
-            : buffer;
-          archive.append(outBuf, { name: entryName });
-          totalSize += file.size;
-          archivedIds.push(file._id);
-          manifest.push({
-            entry: entryName,
-            originalName: file.originalName,
-            mimetype: file.mimetype || 'application/octet-stream',
-            size: file.size,
-	    folderId: file.folder ? file.folder._id.toString() : null,
-            folderName: file.folder ? file.folder.name : null
-          });
+          try {
+            const entryName = `files/${file.owner._id || file.owner}__${file.originalName}`;
+            // Decrypt encrypted blobs so the archive contains usable plaintext
+            const outBuf = (file.isEncrypted && file.encryptionKey)
+              ? decryptBuffer(buffer, file.encryptionKey)
+              : buffer;
+            archive.append(outBuf, { name: entryName });
+            totalSize += file.size;
+            archivedIds.push(file._id);
+            manifest.push({
+              entry: entryName,
+              originalName: file.originalName,
+              mimetype: file.mimetype || 'application/octet-stream',
+              size: file.size,
+              folderId: file.folder ? file.folder._id.toString() : null,
+              folderName: file.folder ? file.folder.name : null
+            });
+          } catch (decErr) {
+            console.error(`Backup: could not decrypt/include file ${file._id} (${file.originalName}): ${decErr.message}`);
+          }
         }
-      }
+      } 
 
       // Manifest so restores can rebuild mimetypes.
       archive.append(Buffer.from(JSON.stringify(manifest, null, 2)), { name: 'manifest.json' });
@@ -578,21 +582,25 @@ const performUserBackup = async (type, userId, initiatedBy = null) => {
         }
 
         if (buffer) {
-          const entryName = `files/${file.owner._id || file.owner}__${file.originalName}`;
-          const outBuf = (file.isEncrypted && file.encryptionKey)
-            ? decryptBuffer(buffer, file.encryptionKey)
-            : buffer;
-          archive.append(outBuf, { name: entryName });
-          totalSize += file.size;
-          archivedIds.push(file._id);
-          manifest.push({
-            entry: entryName,
-            originalName: file.originalName,
-            mimetype: file.mimetype || 'application/octet-stream',
-            size: file.size,
-	    folderId: file.folder ? file.folder._id.toString() : null,
-            folderName: file.folder ? file.folder.name : null
-          });
+          try {
+            const entryName = `files/${file.owner._id || file.owner}__${file.originalName}`;
+            const outBuf = (file.isEncrypted && file.encryptionKey)
+              ? decryptBuffer(buffer, file.encryptionKey)
+              : buffer;
+            archive.append(outBuf, { name: entryName });
+            totalSize += file.size;
+            archivedIds.push(file._id);
+            manifest.push({
+              entry: entryName,
+              originalName: file.originalName,
+              mimetype: file.mimetype || 'application/octet-stream',
+              size: file.size,
+              folderId: file.folder ? file.folder._id.toString() : null,
+              folderName: file.folder ? file.folder.name : null
+            });
+          } catch (decErr) {
+            console.error(`Backup: could not decrypt/include file ${file._id} (${file.originalName}): ${decErr.message}`);
+          }
         }
       }
 

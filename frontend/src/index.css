@@ -514,7 +514,7 @@ button:focus-visible {
 
 .page-container {
   padding: 32px;
-  max-width: 1400px;
+  max-width: calc(1600px + (270px - var(--sb-w, 270px)));
   overflow-x: clip;
 }
 
