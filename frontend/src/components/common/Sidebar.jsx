@@ -19,7 +19,7 @@ const Sidebar = ({ open = false, collapsed = false, onNavigate }) => {
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/files', icon: FolderOpen, label: 'My Files' },
+    { to: '/files', icon: FolderOpen, label: 'File Manager' },
     { to: '/backups', icon: Archive, label: 'Backups' },
     { to: '/trash', icon: Trash2, label: 'Trash' },
     { to: '/settings', icon: Settings, label: 'Settings' },
