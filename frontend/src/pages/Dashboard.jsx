@@ -135,7 +135,7 @@ const Dashboard = () => {
           onClick={() => navigate('/files')}
         >
           <Upload size={16} />
-          Upload Files
+          File Manager
         </button>
       </div>
 
